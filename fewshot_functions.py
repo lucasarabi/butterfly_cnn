@@ -1,3 +1,11 @@
+'''
+    Functions Necessary for prototypical approach Fewshot training
+    Includes the following:
+        - Euclidean distance calculator
+        - Prototypical loss function
+        - Random sampler for episodes
+'''
+
 import tensorflow as tf
 import random
 
