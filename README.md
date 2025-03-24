@@ -7,6 +7,8 @@ We will be changing many things within it when we integrate it with the hardware
 
 MISSING DATA LOADING AND PREPROCESSING
 
+MISSING DATA PREDICTION USING TRAINED MODEL
+
 Notes:   
         - I am running the 3.13.1 version of Python
         - Since I am focusing on implementing Fewshot, I deliberately left out the initial stages
