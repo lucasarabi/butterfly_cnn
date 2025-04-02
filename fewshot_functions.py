@@ -76,8 +76,7 @@ def sample_episode(dataset, num_classes=5, shots=5, queries=10):
             class_samples[lbl].append(img)
 
     # Randomly select `num_classes` classes for the episode
-    sampled_classes = random.sample(class_samples.keys(), num_classes)
-    
+    sampled_classes = random.sample(list(class_samples.keys()), num_classes)    
     support_images, support_labels = [], []
     query_images, query_labels = [], []
 
