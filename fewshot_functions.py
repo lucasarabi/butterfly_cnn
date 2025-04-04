@@ -8,6 +8,8 @@
 
 import tensorflow as tf
 import random
+from collections import defaultdict
+
 
 def euclidean_distance(a, b):
     """
@@ -76,6 +78,14 @@ def sample_episode(dataset, num_classes=5, shots=5, queries=10):
     """
     class_samples = {}  # Dictionary to store images per class
     
+    # Filter out classes that don't have enough examples
+    min_required = shots + queries
+    eligible_classes = [cls for cls, imgs in class_samples.items() if len(imgs) >= min_required]
+    if len(eligible_classes) < num_classes:
+        raise ValueError(f"Not enough classes with at least {min_required} examples. Found {len(eligible_classes)}.")
+    # Randomly select `num_classes` from eligible ones
+    sampled_classes = random.sample(eligible_classes, num_classes)
+
     # Iterate through dataset to collect images per class
     for images, labels in dataset:
         for img, lbl in zip(images, labels.numpy()):  # Convert labels to numpy for indexing
@@ -87,6 +97,9 @@ def sample_episode(dataset, num_classes=5, shots=5, queries=10):
     sampled_classes = random.sample(list(class_samples.keys()), num_classes)    
     support_images, support_labels = [], []
     query_images, query_labels = [], []
+
+    for class_label in sampled_classes:
+        print(f"Class {class_label} has {len(class_samples[class_label])} samples")
 
     # Sample support and query images for each selected class
     for class_idx, class_label in enumerate(sampled_classes):
@@ -100,4 +113,60 @@ def sample_episode(dataset, num_classes=5, shots=5, queries=10):
         tf.stack(support_images), tf.convert_to_tensor(support_labels),
         tf.stack(query_images), tf.convert_to_tensor(query_labels)
     )
+
+def print_class_counts(dataset):
+    """
+    Prints the number of samples for each class in a TensorFlow dataset.
+
+    This function is useful for debugging or analyzing class imbalance
+    in classification tasks. It expects a dataset where each element is 
+    a tuple (images, labels), and labels are integers or categorical values
+    convertible to integers.
+
+    Parameters:
+    - dataset: A tf.data.Dataset yielding (images, labels) tuples.
+    """
+    # Dictionary to hold counts for each class label
+    counts = defaultdict(int)
+
+    # Iterate through the dataset and count label occurrences
+    for images, labels in dataset:
+        for label in labels.numpy():  # Convert Tensor to NumPy for iteration
+            counts[label] += 1
+
+    # Print the count of samples per class
+    print("Class counts:")
+    for cls, count in counts.items():
+        print(f"Class {cls}: {count}")
+
+def get_min_class_size(dataset):
+    """
+    Returns the minimum number of samples across all classes in the dataset.
+
+    This function iterates over the provided TensorFlow dataset, which is expected to yield
+    tuples of (images, labels). It counts the number of occurrences for each class label
+    and then returns the smallest count among them.
+
+    Parameters:
+    - dataset: A tf.data.Dataset yielding (images, labels) tuples. Labels should be integers
+               or convertible to integers.
+
+    Returns:
+    - An integer representing the minimum number of samples for any class in the dataset.
+    """
+    from collections import defaultdict
+    counts = defaultdict(int)
+    
+    # Iterate over the dataset
+    for images, labels in dataset:
+        # If labels are batched, squeeze might be necessary depending on the shape.
+        for label in labels.numpy().squeeze():
+            counts[label] += 1
+
+    # Check if there are any classes present
+    if not counts:
+        raise ValueError("No classes found in the dataset.")
+
+    # Return the minimum sample count among all classes
+    return min(counts.values())
 
